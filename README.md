@@ -1,0 +1,3 @@
+# bernieskram
+Bernie's Kram halt...
+Hier finden sich verschiedene kleine Projekte hauptsächl. zu Lernzwecken bzw. zum Herumspielen
