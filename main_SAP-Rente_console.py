@@ -1,12 +1,12 @@
 #   S A P - R E N T E     #
 #   -------------------   #
-#   bernie   20.05.2021   #
+#   bernie   09.06.2021   #
 #   -------------------   #
 
 """
-Zweck: Dieses Projekt dient der Ermittlung des letzten Arbeitstages bei SAP
+Zweck: Dieses Progrmm dient der Ermittlung des letzten Arbeitstages bei SAP
 Python-Version: 3.9
-Schnittstellen: Shell (Konsole), Tk/Tcl (geplant), evtl. ReST (geplant)
+Schnittstellen: Shell (Konsole), Tk/Tcl (geplant), ReST (geplant)
 """
 
 # Datumsfunktionen einbinden
@@ -18,12 +18,13 @@ def datumsumwandlung_date(jahr, monat, tag):
     datum = datetime.date(year=jahr,
                          month=monat,
                          day=tag)
+    print(datum.strftime("-> %A %d. %B %Y"))
     return datum
 
 def typencheck(eingabe, typ, text):
     """ überprüft eingeg. Wert auf korrektes Type-Format """
     """ funktioniert nicht korrekt bei Typ date """
-    if typ == 'int':
+    if (typ == 'int'):
         dummy_int = 0
         while isinstance(dummy_int, int):
             try:
@@ -42,14 +43,17 @@ def typencheck(eingabe, typ, text):
                 pass
         ausgabe = dummy_float
     elif (typ == 'date'):
-        dummy_date = date.today()
-        while isinstance(dummy_date, date):
+        datumunbekannt = True
+        while datumunbekannt == True:
             try:
-               dummy_date = isinstance(input(text), datetime)
-               break
-            except:
-                pass
-        ausgabe = dummy_date
+                rar_tag = int(eingabe[0:2])
+                rar_monat = int(eingabe[3:5])
+                rar_jahr = int(eingabe[6:10])
+                ausgabe = datumsumwandlung_date(rar_jahr, rar_monat, rar_tag)
+                datumunbekannt = False
+            except ValueError:
+                datumunbekannt = True
+                eingabe = input("Datum bitte im Format TT.MM.JJJJ eingeben: ")
     else:
         print("*** ERROR in typencheck ***")
     return ausgabe
@@ -62,39 +66,38 @@ def datum_tage_netto(datum_alt, tage, firedays):
     # da wir nicht den ersten Rententag, sondern den letzten Arbeitstag ausrechnen, addieren wir 1 Tag
     tage_hochgerechnet = (tage * faktor) + firedays + 1
     datum_neu = datum_alt - datetime.timedelta(tage_hochgerechnet)
-    return datum_neu
+    # Prüfung auf Wochentag: fällt Datum auf Wochenende, wird der vorherige Fr. gezogen
+    if (datum_neu.weekday() == 5):
+        datum_netto = datum_neu - datetime.timedelta(1)
+    elif (datum_neu.weekday() == 6):
+        datum_netto = datum_neu - datetime.timedelta(2)
+    else:
+        datum_netto = datum_neu
+    return datum_netto
 
 def ergebnis_ausgabe(datum):
     """ Ausgabe des ermittelten Datums """
     print("\nERGEBNIS")
     print("--------")
-    print("letzter Arbeitstag mit Berücksichtigung von Wochenenden und eingeg. Feiertagen (JJJJ-MM-TT): ", datum)
+    print("letzter Arbeitstag mit Berücksichtigung von WE und eingeg. Feiertagen: ", datum.strftime("%A %d. %B %Y"))
     print("Bem.: ohne Gewähr, gewisse Unschärfen müssen akzeptiert werden!\n")
 
 # Beginn Hauptprogramm
 heute = date.today()
-rar_datum = heute
 resturlaub_t = 0
 azk_h = 0
 feiertage = 0
 # Ein-/Ausgabe nur via Text-Konsole:
-print("Willkommen zum Projekt SAP-Rentner! - wann bin ich dran?\t\t\t\t\t", heute)
+print("Willkommen zum Projekt SAP-Rentner! - wann bin ich dran? \t ", heute)
 print("\nPARAMETER-EINGABE")
-print("Beginn der Regelaltersrente gem. Rentenauskunft:")
-# rar_datum = typencheck(rar_datum, "date", "\t Datum (JJJJ-MM-TT): \t ")
-# rar_tag = typencheck(rar_tag, "int", "\tTag (1-31): \t ")
-# rar_monat = typencheck(rar_monat, "int", "\tMonat (1-12): \t ")
-# rar_jahr = typencheck(rar_jahr, "int", "\tJahr: \t\t\t ")
-rar_datum_string = input("Datum (JJJJ-MM-TT): ")
-rar_jahr = int(rar_datum_string[0:4])
-rar_monat = int(rar_datum_string[5:7])
-rar_tag = int(rar_datum_string[8:10])
-rar = datumsumwandlung_date(rar_jahr, rar_monat, rar_tag)
-resturlaub_t = typencheck(resturlaub_t, "float", "Resturlaub in Tagen (Punkt als Separator): \t\t ")
-azk_h = typencheck(azk_h, "float", "gesammelte h im AZK (Punkt als Separator): \t\t ")
+rar_datum_string = input("Beginn der Regelaltersrente gem. Rentenauskunft (TT.MM.JJJJ): \t ")
+rar = typencheck(rar_datum_string, "date", "Datum (TT.MM.JJJJ): \t ")
+resturlaub_t = typencheck(resturlaub_t, "float", "Resturlaub in Tagen (Punkt als Separator): \t ")
+azk_h = typencheck(azk_h, "float", "gesammelte h im AZK (Punkt als Separator): \t ")
 feiertage = typencheck(feiertage, "int", "evtl. Anzahl zu berücksichtigender Feiertage: \t ")
 tage1 = rar - heute
 tage2 = resturlaub_t + (azk_h // 8)
 netto_datum = datum_tage_netto(rar, tage2, feiertage)
 ergebnis_ausgabe(netto_datum)
+
 # ENDE
